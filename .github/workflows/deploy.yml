@@ -2,7 +2,10 @@ name: Deploy Node.js App to EKS via Terraform + Helm
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
+      - staging
+      - dev
   workflow_dispatch:
 
 jobs:
@@ -12,10 +15,9 @@ jobs:
     env:
       AWS_REGION: ap-south-1
       CLUSTER_NAME: github-eks-demo
-      DOCKER_IMAGE: your-dockerhub-username/nodeapp:latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Configure AWS credentials
@@ -27,26 +29,6 @@ jobs:
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.6.6
-
-      - name: Setup kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: "v1.29.0"
-
-      - name: Setup Helm
-        uses: azure/setup-helm@v3
-        with:
-          version: "3.13.0"
-
-      - name: Build Docker Image
-        run: docker build -t $DOCKER_IMAGE ./app
-
-      - name: Push Docker Image
-        run: |
-          echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u your-dockerhub-username --password-stdin
-          docker push $DOCKER_IMAGE
 
       - name: Terraform Init
         working-directory: ./terraform
@@ -54,13 +36,20 @@ jobs:
 
       - name: Terraform Apply
         working-directory: ./terraform
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve -var="cluster_name=${{ env.CLUSTER_NAME }}" -var="region=${{ env.AWS_REGION }}"
 
-      - name: Configure kubeconfig
+      - name: Configure kubectl
         run: |
-          aws eks update-kubeconfig --region $AWS_REGION --name $CLUSTER_NAME
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.CLUSTER_NAME }}
 
-      - name: Deploy Helm Chart
+      - name: Setup Helm
+        uses: azure/setup-helm@v4.2.0
+
+      - name: Deploy App via Helm
         run: |
-          helm upgrade --install myapp ./helm/myapp --namespace default
-          kubectl get svc
+          helm upgrade --install nodeapp ./helm-chart --namespace default --create-namespace
+
+      - name: Verify Deployment
+        run: |
+          kubectl get pods -o wide
+          kubectl get svc -o wide
