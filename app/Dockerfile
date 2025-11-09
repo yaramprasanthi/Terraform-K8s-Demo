@@ -1,18 +1,18 @@
-# Use Node.js LTS Alpine
+# Use Node.js LTS image
 FROM node:18-alpine
 
 # Set working directory
 WORKDIR /usr/src/app
 
-# Copy and install dependencies
+# Copy dependencies
 COPY package*.json ./
 RUN npm install
 
-# Copy app source
+# Copy source
 COPY . .
 
 # Expose port
-EXPOSE 3000
+EXPOSE 8080
 
 # Start app
-CMD ["node", "server.js"]
+CMD ["node", "index.js"]

@@ -1,11 +1,11 @@
 output "cluster_name" {
-  value = aws_eks_cluster.cluster.name
+  value = var.cluster_name
 }
 
 output "cluster_endpoint" {
-  value = aws_eks_cluster.cluster.endpoint
+  value = module.eks.cluster_endpoint
 }
 
-output "region" {
-  value = var.region
+output "cluster_arn" {
+  value = module.eks.cluster_arn
 }
