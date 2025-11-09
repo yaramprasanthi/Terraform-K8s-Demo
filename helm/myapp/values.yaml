@@ -1,0 +1,12 @@
+replicaCount: 1
+
+image:
+  repository: yaramprasanthi/myapp
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: LoadBalancer
+  port: 80
+  targetPort: 3000
+
